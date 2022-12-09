@@ -1,0 +1,123 @@
+import netmiko
+import re
+
+
+SW1= {
+        "device_type":"cisco_ios",
+        "host":"192.168.0.1",
+        "username":"cisco",
+        "password":'cisco',
+        "port":"22",
+        "secret":"cisco",
+        }
+
+CONECTAR= netmiko.ConnectHandler(**SW1)
+print("CONEXION ESTABLECIDA")
+print("♡⁠♡♡♡♡♡⁠♡♡"*24)
+MACADD = input("introduce la mac address escribiendola cada 4 caracteres  xxxx.xxxx.xxxx.xxxx: ")
+
+while True:
+
+    COMANDO = CONECTAR.send_command("sh mac address-table")
+   
+    print("♡⁠♡♡♡♡♡⁠♡♡"*18)
+
+
+    f = re.search(MACADD, COMANDO)
+    print("♡⁠♡♡♡♡♡⁠♡♡"*18)
+
+
+    if f is not None:
+        
+        h = "show mac address-table address"+" "+MACADD
+        q = CONECTAR.send_command(h)
+       
+        print("♡⁠♡♡♡♡♡⁠♡♡"*18)
+
+        PORT = re.findall(r"\w\w\w?\d\/\d\/?\d?\d?", q) 
+        PUERTO= (PORT[0])
+
+        print("⁠♡⁠♡♡♡♡♡⁠♡♡"*18)
+        
+        print("MAC address encontrada en el puerto: ", PUERTO)
+
+        cdp  = CONECTAR.send_command("sh cdp neigh")
+        
+        PORT2 = re.findall(r"(Gi|Fa)", cdp)
+        PORT3 = re.findall(r"(\d\/\d\/?\d?\d?)", cdp)
+        
+    
+        try:
+       
+
+            for w in range (0,20,2):
+                PRT=(PORT2[w])
+                PRT2=(PORT3[w])
+                PRT3= (PRT)+(PRT2)
+
+
+                if PRT3 == PUERTO:
+                    
+                    break
+                
+        except IndexError:
+            
+            print("Busqueda finalizada!")
+            
+            break
+            
+
+
+
+        PRT=(PORT2[w])
+        PRT2=(PORT3[w])
+        PRT3= (PRT)+(PRT2)
+        
+
+        POSICION=w*2//2
+
+        
+
+        if PRT3 == PUERTO:
+
+
+            
+            Ndet = CONECTAR.send_command("sh cdp neigh det")
+            LaIP= re.findall(r"\d\d\d[.]\d\d?\d?[.]\d\d?\d?[.]\d\d?\d?", Ndet)
+            IP =(LaIP[POSICION])
+            
+
+
+            
+            CUALQUIERSW= {
+                    "device_type":"cisco_ios",
+                    "host":IP,
+                    "username":"cisco",
+                    "password":'cisco',
+                    "port":"22",
+                    "secret":"cisco",
+                 }
+
+
+            
+                
+            CONECTAR= netmiko.ConnectHandler(**CUALQUIERSW)
+
+
+            Hdet = CONECTAR.send_command("sh running-config | include hos")
+            HOST= re.findall(r"[^hostname ]..?.?.?.?.?.?.?.?.?", Hdet)
+            fd= (HOST[0])
+            print("SWITCH ACTUAL: ", fd)
+            
+        
+
+        
+
+    else:
+        print("Esa mac address no esta en la tabla:(")
+
+        break
+
+
+
+
